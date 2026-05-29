@@ -14,7 +14,6 @@ export const LoginService = {
     const res = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // GANTI 'code' menjadi 'otp_code' biar dikenali backend
       body: JSON.stringify({ identifier, otp_code: code }), 
     });
     return res.json();

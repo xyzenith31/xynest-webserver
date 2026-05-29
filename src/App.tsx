@@ -16,8 +16,6 @@ function App() {
         </Route>
         
         <Route path="/home" element={<HomescreenPage />} />
-        
-        {/* Redirect default ke login */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     </BrowserRouter>

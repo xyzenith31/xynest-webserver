@@ -9,6 +9,7 @@ export const RegisterService = {
     });
     return res.json();
   },
+  
   resendCode: async (email: string) => {
     const res = await fetch(`${API_URL}/auth/resend-verify`, {
       method: 'POST',

@@ -9,7 +9,6 @@ export default function LoginPage() {
   const [qrToken, setQrToken] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Fungsi untuk Load QR
   const fetchQR = async () => {
     try {
       const res = await LoginService.generateQR();
@@ -23,7 +22,6 @@ export default function LoginPage() {
     fetchQR();
   }, []);
 
-  // Polling mengecek status QR Code
   useEffect(() => {
     if (!qrToken) return;
 
@@ -38,7 +36,7 @@ export default function LoginPage() {
       } catch (err) {
         console.error('Polling error:', err);
       }
-    }, 3000); // Cek setiap 3 detik
+    }, 3000); 
 
     return () => clearInterval(interval);
   }, [qrToken, navigate]);
@@ -49,7 +47,6 @@ export default function LoginPage() {
     try {
       const res = await LoginService.requestLogin(identifier);
       if (res.success) {
-        // Arahkan ke halaman verifikasi untuk input kode OTP
         navigate(`/verify?email=${encodeURIComponent(res.email || identifier)}&type=login`);
       } else {
         alert(res.error || 'Gagal login');
@@ -65,7 +62,6 @@ export default function LoginPage() {
     <div className="space-y-6">
       <h3 className="text-xl font-bold text-center">Masuk ke XyNest</h3>
       
-      {/* QR Code Section */}
       <div className="flex flex-col items-center justify-center p-4 border rounded-lg bg-gray-50">
         <p className="text-sm text-gray-500 mb-4 text-center">Scan QR Code menggunakan aplikasi mobile XyNest kamu</p>
         {qrToken ? (
@@ -83,7 +79,6 @@ export default function LoginPage() {
         <div className="relative flex justify-center text-sm"><span className="px-2 bg-white text-gray-500">Atau masuk manual</span></div>
       </div>
 
-      {/* Manual Login Section */}
       <form onSubmit={handleManualLogin} className="space-y-4">
         <div>
           <label className="block text-sm font-medium text-gray-700">Email / Username / No. HP</label>

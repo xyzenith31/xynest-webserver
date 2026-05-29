@@ -7,13 +7,11 @@ import { RegisterService } from '../../services/auth/RegisterService';
 export default function VerifyPage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const email = searchParams.get('email') || ''; // Ini bertindak sbg identifier
-  const type = searchParams.get('type') || 'login'; // login atau register
-  
+  const email = searchParams.get('email') || ''; 
+  const type = searchParams.get('type') || 'login';
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // Pastikan input selalu huruf kapital dan angka saja
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const raw = e.target.value;
     const formatted = raw.toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -23,7 +21,6 @@ export default function VerifyPage() {
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Cek di sisi frontend dulu sebelum nembak backend
     if (!code || code.length < 6) {
       alert("Kode OTP harus 6 digit.");
       return;
@@ -33,7 +30,6 @@ export default function VerifyPage() {
     try {
       let res;
       if (type === 'login') {
-        // Mengirim email (sebagai identifier) dan code
         res = await LoginService.verifyLogin(email, code);
       } else {
         res = await VerifyService.verifyCode(email, code);
