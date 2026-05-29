@@ -1,19 +1,27 @@
-export default function App() {
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import AuthLayout from './layouts/AuthLayout';
+import LoginPage from './pages/auth/LoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
+import VerifyPage from './pages/auth/VerifyPage';
+import HomescreenPage from './pages/other/HomescreenPage';
+
+function App() {
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center text-white">
-      <div className="bg-slate-900 p-10 rounded-2xl border border-slate-800 shadow-2xl">
-        <h1 className="text-4xl font-bold text-cyan-400 mb-4">
-          React + Vite + Tailwind v3
-        </h1>
-
-        <p className="text-slate-300">
-          Setup berhasil bro 🚀
-        </p>
-
-        <button className="mt-6 px-6 py-3 bg-cyan-500 hover:bg-cyan-400 rounded-xl font-semibold text-black transition">
-          Gas Ngoding
-        </button>
-      </div>
-    </div>
-  )
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AuthLayout />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/verify" element={<VerifyPage />} />
+        </Route>
+        
+        <Route path="/home" element={<HomescreenPage />} />
+        
+        {/* Redirect default ke login */}
+        <Route path="*" element={<Navigate to="/login" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
+
+export default App;
