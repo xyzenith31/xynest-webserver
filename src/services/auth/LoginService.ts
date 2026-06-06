@@ -5,17 +5,54 @@ import { BASE_URL } from './ServicesConfiguration';
 export const getClientDeviceInfo = () => {
   const parser = new UAParser();
   const result = parser.getResult();
-
-  const deviceModel = result.device.model || result.browser.name || 'Unknown Web Device';
   
-  let platform = 'Browser';
+  let browserName = result.browser.name || 'Web';
+  
+  if (browserName.toLowerCase().includes('electron') || browserName === 'Chromium') {
+    const ua = window.navigator.userAgent || '';
+    if (ua.includes('Edg/')) {
+      browserName = 'Edge';
+    } else if (ua.includes('Chrome/')) {
+      browserName = 'Chrome';
+    } else if (ua.includes('Firefox/')) {
+      browserName = 'Firefox';
+    } else if (ua.includes('Safari/')) {
+      browserName = 'Safari';
+    } else {
+      browserName = 'Chrome';
+    }
+  }
+
+  if (browserName.endsWith(' Browser')) {
+    browserName = browserName.replace(' Browser', '');
+  }
+  
+  const deviceModel = result.device.model 
+    ? `${result.device.model} (${browserName})` 
+    : browserName;
+
+  let platform = 'Website'; 
   if (result.os.name === 'Android') platform = 'Android';
   else if (result.os.name === 'iOS') platform = 'iOS';
-  else if (result.os.name) platform = `${result.os.name} Desktop`;
 
-  const osVersion = result.os.name && result.os.version 
-    ? `${result.os.name} ${result.os.version}` 
-    : result.os.name || 'Unknown OS';
+  let osVersion = 'Unknown OS';
+  const rawOsName = result.os.name || '';
+  
+  if (rawOsName.toLowerCase().includes('windows')) {
+    osVersion = 'Windows';
+  } else if (rawOsName.toLowerCase().includes('mac os') || rawOsName.toLowerCase().includes('macos')) {
+    osVersion = 'macOS';
+  } else if (rawOsName.toLowerCase().includes('linux')) {
+    osVersion = 'Linux';
+  } else if (rawOsName.toLowerCase().includes('ubuntu')) {
+    osVersion = 'Linux';
+  } else if (rawOsName === 'iOS') {
+    osVersion = 'iOS';
+  } else if (rawOsName === 'Android') {
+    osVersion = 'Android';
+  } else {
+    osVersion = rawOsName || 'Unknown OS';
+  }
 
   return {
     device_model: deviceModel,

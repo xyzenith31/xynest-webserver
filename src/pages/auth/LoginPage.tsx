@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import QRCodeLib from 'react-qr-code';
 import { useNavigate } from 'react-router-dom';
-import { requestLoginService, verifyLoginService } from '../../services/auth/LoginService';
+import { requestLoginService, verifyLoginService, getClientDeviceInfo } from '../../services/auth/LoginService';
 import { generateQRTokenService, checkQRStatusService } from '../../services/auth/DeviceService';
 
 const QRCodeComponent = (QRCodeLib as any).default || QRCodeLib;
@@ -160,7 +160,11 @@ const LoginPage: React.FC = () => {
             {qrToken ? (
               <div className="flex justify-center items-center bg-white p-4 rounded-lg shadow-sm w-fit mx-auto">
                 <QRCodeComponent
-                  value={qrToken}
+                  value={JSON.stringify({ 
+                    type: 'xy_login', 
+                    token: qrToken,
+                    ...getClientDeviceInfo() 
+                  })}
                   size={256}
                   level="H"
                 />
