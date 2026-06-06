@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import QRCodeLib from 'react-qr-code';
-import { useNavigate } from 'react-router-dom';
-import { requestLoginService, verifyLoginService, getClientDeviceInfo } from '../../services/auth/LoginService';
+import { useNavigate, Link } from 'react-router-dom';
+import { requestLoginService, getClientDeviceInfo } from '../../services/auth/LoginService';
 import { generateQRTokenService, checkQRStatusService } from '../../services/auth/DeviceService';
 
 const QRCodeComponent = (QRCodeLib as any).default || QRCodeLib;
@@ -10,9 +10,6 @@ const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [loginMode, setLoginMode] = useState<'FORM' | 'QR'>('FORM');
   const [identifier, setIdentifier] = useState('');
-  const [otpCode, setOtpCode] = useState('');
-  const [step, setStep] = useState<'IDENTIFIER' | 'OTP'>('IDENTIFIER');
-  const [emailSent, setEmailSent] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [qrToken, setQrToken] = useState('');
@@ -25,29 +22,14 @@ const LoginPage: React.FC = () => {
     try {
       const res = await requestLoginService(identifier);
       if (res.success) {
-        setEmailSent(res.email);
-        setStep('OTP');
+        navigate(`/verify?email=${encodeURIComponent(res.email)}&type=login`);
       }
     } catch (err: any) {
-      setError(err.error || err.message || 'Terjadi kesalahan sistem');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!otpCode) return setError('Kode OTP wajib diisi');
-    setError('');
-    setLoading(true);
-    try {
-      const res = await verifyLoginService(emailSent, otpCode);
-      if (res.success && res.session_token) {
-        localStorage.setItem('session_token', res.session_token);
-        navigate('/home');
+      if (err.is_banned) {
+        setError(`Akun ditangguhkan: ${err.ban_details?.reason}`);
+      } else {
+        setError(err.error || err.message || 'Terjadi kesalahan sistem');
       }
-    } catch (err: any) {
-      setError(err.error || err.message || 'Verifikasi gagal');
     } finally {
       setLoading(false);
     }
@@ -80,12 +62,22 @@ const LoginPage: React.FC = () => {
         if (res.success && res.status === 'AUTHORIZED' && res.session_token) {
           clearInterval(intervalId);
           localStorage.setItem('session_token', res.session_token);
-          navigate('/home');
+          
+          const userRole = res.user?.role || res.role || 'users';
+          if (userRole === 'administrator') {
+            navigate('/admin/dashboard');
+          } else {
+            navigate('/user/home');
+          }
         }
       } catch (err: any) {
         clearInterval(intervalId);
         setQrToken('');
-        setError('QR Code telah kadaluarsa, silakan muat ulang halaman.');
+        if (err.is_banned) {
+          setError(`Akun ditangguhkan: ${err.ban_details?.reason}`);
+        } else {
+          setError('QR Code telah kadaluarsa, silakan muat ulang halaman.');
+        }
       }
     }, 3000); 
 
@@ -107,51 +99,26 @@ const LoginPage: React.FC = () => {
 
         {loginMode === 'FORM' && (
           <div>
-            {step === 'IDENTIFIER' ? (
-              <form onSubmit={handleRequestOtp} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email / Username / No HP</label>
-                  <input
-                    type="text"
-                    value={identifier}
-                    onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="Contoh: @username atau email@domain.com"
-                    className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500"
-                    disabled={loading}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 transition font-bold py-2 px-4 rounded-lg disabled:opacity-50"
+            <form onSubmit={handleRequestOtp} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Email / Username / No HP</label>
+                <input
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="Contoh: @username atau email@domain.com"
+                  className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-white focus:outline-none focus:border-indigo-500"
                   disabled={loading}
-                >
-                  {loading ? 'Mengirim Kode...' : 'Minta Kode OTP'}
-                </button>
-              </form>
-            ) : (
-              <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <div>
-                  <p className="text-sm text-gray-400 mb-2">Kode OTP telah dikirimkan menuju: <b>{emailSent}</b></p>
-                  <label className="block text-sm font-medium mb-1">Masukkan Kode OTP</label>
-                  <input
-                    type="text"
-                    maxLength={6}
-                    value={otpCode}
-                    onChange={(e) => setOtpCode(e.target.value)}
-                    placeholder="Enam digit kode OTP"
-                    className="w-full bg-gray-900 border border-gray-600 rounded-lg px-4 py-2 text-center text-xl font-bold tracking-widest text-white focus:outline-none focus:border-indigo-500"
-                    disabled={loading}
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full bg-green-600 hover:bg-green-700 transition font-bold py-2 px-4 rounded-lg disabled:opacity-50"
-                  disabled={loading}
-                >
-                  {loading ? 'Memvalidasi...' : 'Verifikasi & Masuk'}
-                </button>
-              </form>
-            )}
+                />
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-indigo-600 hover:bg-indigo-700 transition font-bold py-2 px-4 rounded-lg disabled:opacity-50"
+                disabled={loading}
+              >
+                {loading ? 'Mengirim Kode...' : 'Minta Kode OTP'}
+              </button>
+            </form>
           </div>
         )}
 
@@ -191,12 +158,21 @@ const LoginPage: React.FC = () => {
           <div className="relative flex justify-center text-sm"><span className="bg-gray-800 px-2 text-gray-400">Atau Pilihan Lain</span></div>
         </div>
 
-        <button
-          onClick={() => setLoginMode(loginMode === 'FORM' ? 'QR' : 'FORM')}
-          className="w-full bg-gray-700 hover:bg-gray-600 border border-gray-600 transition font-medium py-2 px-4 rounded-lg text-sm"
-        >
-          {loginMode === 'FORM' ? 'Masuk Menggunakan QR Code' : 'Kembali ke Form Email'}
-        </button>
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={() => setLoginMode(loginMode === 'FORM' ? 'QR' : 'FORM')}
+            className="w-full bg-gray-700 hover:bg-gray-600 border border-gray-600 transition font-medium py-2 px-4 rounded-lg text-sm"
+          >
+            {loginMode === 'FORM' ? 'Masuk Menggunakan QR Code' : 'Kembali ke Form Email'}
+          </button>
+
+          <p className="text-sm text-center text-gray-400 mt-2">
+            Belum punya akun?{' '}
+            <Link to="/register" className="text-indigo-400 hover:text-indigo-300 font-medium hover:underline transition-colors">
+              Daftar Sekarang
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

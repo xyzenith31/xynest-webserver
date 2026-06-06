@@ -1,6 +1,5 @@
 import { UAParser } from 'ua-parser-js';
-import { BASE_URL } from './ServicesConfiguration';
-
+import { API_URL } from './ServicesConfiguration';
 
 export const getClientDeviceInfo = () => {
   const parser = new UAParser();
@@ -40,10 +39,6 @@ export const getClientDeviceInfo = () => {
   
   if (rawOsName.toLowerCase().includes('windows')) {
     osVersion = 'Windows';
-  } else if (rawOsName.toLowerCase().includes('mac os') || rawOsName.toLowerCase().includes('macos')) {
-    osVersion = 'macOS';
-  } else if (rawOsName.toLowerCase().includes('linux')) {
-    osVersion = 'Linux';
   } else if (rawOsName.toLowerCase().includes('ubuntu')) {
     osVersion = 'Linux';
   } else if (rawOsName === 'iOS') {
@@ -63,7 +58,7 @@ export const getClientDeviceInfo = () => {
 
 export const requestLoginService = async (identifier: string) => {
   try {
-    const response = await fetch(`${BASE_URL}/auth/login-request`, {
+    const response = await fetch(`${API_URL}/auth/login-request`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -74,6 +69,7 @@ export const requestLoginService = async (identifier: string) => {
     if (!response.ok) throw data;
     return data;
   } catch (error: any) {
+    if (error.is_banned) throw error;
     throw error.error || error.message || 'Gagal memproses permintaan login';
   }
 };
@@ -81,7 +77,7 @@ export const requestLoginService = async (identifier: string) => {
 export const verifyLoginService = async (email: string, otpCode: string) => {
   try {
     const deviceInfo = getClientDeviceInfo();
-    const response = await fetch(`${BASE_URL}/auth/login`, {
+    const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -96,6 +92,7 @@ export const verifyLoginService = async (email: string, otpCode: string) => {
     if (!response.ok) throw data;
     return data;
   } catch (error: any) {
-    throw error.error || error.message || 'Verifikasi OTP gagal';
+    if (error.is_banned) throw error;
+    throw error.error || error.message || 'Gagal memproses verifikasi login';
   }
-};  
+};

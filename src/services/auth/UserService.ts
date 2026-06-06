@@ -11,8 +11,10 @@ export const getUserProfile = async (token: string) => {
     });
     const data = await response.json();
     if (!response.ok) throw data;
+    
     return data;
   } catch (error: any) {
+    if (error.is_banned) throw error;
     throw error.error || error.message || 'Gagal mengambil data pengguna';
   }
 };
