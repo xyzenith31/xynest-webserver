@@ -2,7 +2,6 @@ const PRODUCTION_URL = "";
 
 const getBaseUrl = (): string => {
   if (PRODUCTION_URL) return PRODUCTION_URL;
-  
   const hostname = window.location.hostname || 'localhost';
   
   return `http://${hostname}:3000`;

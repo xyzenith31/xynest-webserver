@@ -7,6 +7,7 @@ import UserLayout from './layouts/UserLayout';
 import HomescreenPage from './pages/other/HomescreenPage';
 import AdministratorLayout from './layouts/AdministratorLayout';
 import DashboardPage from './pages/other/DashboardPage';
+import BannedAdministratorPage from './pages/admin/BannedAdministratorPage';
 
 function App() {
   return (
@@ -24,7 +25,7 @@ function App() {
 
         <Route path="/admin" element={<AdministratorLayout />}>
           <Route path="dashboard" element={<DashboardPage />} />
-          <Route path="banned" element={<div className="bg-white p-6 rounded-2xl border border-slate-200"><h2 className="text-lg font-bold text-slate-900">Daftar Pengguna Banned & Fitur Banding</h2><p className="text-sm text-slate-500 mt-1">Gunakan endpoint backend controllers/admin/banned.controller.ts di sini bro.</p></div>} />
+          <Route path="banned" element={<BannedAdministratorPage />} />
           <Route path="users" element={<div className="bg-white p-6 rounded-2xl border border-slate-200">Manajemen Data Pengguna</div>} />
         </Route>
         

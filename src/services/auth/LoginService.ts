@@ -39,6 +39,10 @@ export const getClientDeviceInfo = () => {
   
   if (rawOsName.toLowerCase().includes('windows')) {
     osVersion = 'Windows';
+  } else if (rawOsName.toLowerCase().includes('mac os') || rawOsName.toLowerCase().includes('macos')) {
+    osVersion = 'macOS';
+  } else if (rawOsName.toLowerCase().includes('linux')) {
+    osVersion = 'Linux';
   } else if (rawOsName.toLowerCase().includes('ubuntu')) {
     osVersion = 'Linux';
   } else if (rawOsName === 'iOS') {
@@ -60,9 +64,7 @@ export const requestLoginService = async (identifier: string) => {
   try {
     const response = await fetch(`${API_URL}/auth/login-request`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identifier }),
     });
     const data = await response.json();
@@ -79,9 +81,7 @@ export const verifyLoginService = async (email: string, otpCode: string) => {
     const deviceInfo = getClientDeviceInfo();
     const response = await fetch(`${API_URL}/auth/login`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email,
         otp_code: otpCode,
@@ -93,6 +93,26 @@ export const verifyLoginService = async (email: string, otpCode: string) => {
     return data;
   } catch (error: any) {
     if (error.is_banned) throw error;
-    throw error.error || error.message || 'Gagal memproses verifikasi login';
+    throw error.error || error.message || 'Verifikasi OTP gagal';
   }
+};
+
+export const generateLoginQRTokenService = async () => {
+  const response = await fetch(`${API_URL}/auth/qr/generate`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const data = await response.json();
+  if (!response.ok) throw data.error || data.message || 'Gagal membuat QR Token';
+  return data;
+};
+
+export const checkLoginQRStatusService = async (qrToken: string) => {
+  const response = await fetch(`${API_URL}/auth/qr/status/${qrToken}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+  const data = await response.json();
+  if (!response.ok) throw data.error || data.message || 'Gagal mengecek status QR';
+  return data;
 };
