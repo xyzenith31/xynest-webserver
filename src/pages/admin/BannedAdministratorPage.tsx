@@ -50,12 +50,30 @@ const BannedAdministratorPage = () => {
         alert('Pengguna berhasil diblokir!');
         setSelectedUser(null);
         setBanForm({ reason: '', duration_value: 1, duration_unit: 'days' });
+        fetchData();
       } else {
         alert(res.error || 'Terjadi kesalahan saat memblokir.');
       }
     } catch (error) {
       console.error(error);
       alert('Gagal memblokir pengguna.');
+    }
+  };
+
+  const handleUnban = async (userId: string, username: string) => {
+    if (!window.confirm(`Apakah Anda yakin ingin mencabut status banned untuk ${username}?`)) return;
+
+    try {
+      const res = await BannedService.unbanUser({ user_id: userId });
+      if (res.success) {
+        alert('Status banned berhasil dicabut!');
+        fetchData();
+      } else {
+        alert(res.error || 'Terjadi kesalahan saat mencabut ban.');
+      }
+    } catch (error) {
+      console.error(error);
+      alert('Gagal mencabut status pengguna.');
     }
   };
 
@@ -96,9 +114,9 @@ const BannedAdministratorPage = () => {
               <thead className="bg-slate-50 text-slate-700 font-semibold border-b border-slate-200">
                 <tr>
                   <th className="py-3 px-4 rounded-tl-lg">Username</th>
-                  <th className="py-3 px-4">Nama Lengkap</th>
                   <th className="py-3 px-4">Email</th>
                   <th className="py-3 px-4">Role</th>
+                  <th className="py-3 px-4">Status</th>
                   <th className="py-3 px-4 text-right rounded-tr-lg">Aksi</th>
                 </tr>
               </thead>
@@ -106,21 +124,40 @@ const BannedAdministratorPage = () => {
                 {users.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-3 px-4 font-medium text-slate-800">{user.username}</td>
-                    <td className="py-3 px-4">{user.full_name}</td>
                     <td className="py-3 px-4">{user.email}</td>
                     <td className="py-3 px-4">
                       <span className={`px-2 py-1 rounded-md text-xs font-semibold ${user.role === 'admin' ? 'bg-indigo-100 text-indigo-700' : 'bg-slate-100 text-slate-600'}`}>
                         {user.role}
                       </span>
                     </td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 rounded-md text-xs font-semibold ${
+                        user.status === 'BANNED' ? 'bg-rose-100 text-rose-700' : 
+                        user.status === 'APPEAL' ? 'bg-amber-100 text-amber-700' : 
+                        'bg-emerald-100 text-emerald-700'
+                      }`}>
+                        {user.status}
+                      </span>
+                    </td>
                     <td className="py-3 px-4 text-right">
                       {user.role !== 'admin' && (
-                        <button 
-                          onClick={() => setSelectedUser(user)}
-                          className="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-semibold transition-colors"
-                        >
-                          Ban User
-                        </button>
+                        <>
+                          {user.status === 'ACTIVE' ? (
+                            <button 
+                              onClick={() => setSelectedUser(user)}
+                              className="px-3 py-1.5 bg-rose-50 text-rose-600 hover:bg-rose-100 rounded-lg text-xs font-semibold transition-colors"
+                            >
+                              Ban User
+                            </button>
+                          ) : (
+                            <button 
+                              onClick={() => handleUnban(user.id, user.username)}
+                              className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition-colors"
+                            >
+                              Cabut Ban
+                            </button>
+                          )}
+                        </>
                       )}
                     </td>
                   </tr>
@@ -140,7 +177,7 @@ const BannedAdministratorPage = () => {
                   <th className="py-3 px-4">Alasan Pemblokiran</th>
                   <th className="py-3 px-4">Alasan Banding (Singkat)</th>
                   <th className="py-3 px-4">Penjelasan Banding</th>
-                  <th className="py-3 px-4 text-right rounded-tr-lg">Status</th>
+                  <th className="py-3 px-4 text-right rounded-tr-lg">Aksi</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -154,9 +191,12 @@ const BannedAdministratorPage = () => {
                     <td className="py-3 px-4">{appeal.appeal_reason}</td>
                     <td className="py-3 px-4 max-w-xs truncate" title={appeal.appeal_text}>{appeal.appeal_text}</td>
                     <td className="py-3 px-4 text-right">
-                      <span className="px-2 py-1 bg-amber-100 text-amber-700 rounded-md text-xs font-semibold">
-                        {appeal.appeal_status}
-                      </span>
+                      <button 
+                        onClick={() => handleUnban(appeal.user_id, appeal.users?.username)}
+                        className="px-3 py-1.5 bg-emerald-50 text-emerald-600 hover:bg-emerald-100 rounded-lg text-xs font-semibold transition-colors"
+                      >
+                        Terima (Cabut Ban)
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -169,7 +209,6 @@ const BannedAdministratorPage = () => {
         )}
       </div>
 
-      {/* Ban Form Modal */}
       {selectedUser && (
         <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
@@ -209,6 +248,7 @@ const BannedAdministratorPage = () => {
                     value={banForm.duration_unit}
                     onChange={(e) => setBanForm({...banForm, duration_unit: e.target.value as any})}
                   >
+                    <option value="minutes">Menit</option>
                     <option value="hours">Jam</option>
                     <option value="days">Hari</option>
                     <option value="weeks">Minggu</option>
